@@ -63,6 +63,7 @@ def do_terrain_correction(source, downsample):
     print('\tTerrain correction...')
     parameters = HashMap()
     parameters.put('demName', 'Copernicus 30m Global DEM')
+    #parameters.put('demName', 'SRTM 1Sec Grid')
     parameters.put('mapProjection', 'EPSG:3857')
     parameters.put('imgResamplingMethod', 'BILINEAR_INTERPOLATION')
     parameters.put('saveProjectedLocalIncidenceAngle', False)
@@ -194,17 +195,36 @@ def run_mosaic(dict_mosaic):
         print('PERIODE ',start_periode,'-',end_periode)
         outflnm='/data/ksa/01_Image_Acquisition/02_Processed_mosaic/'+dict_mosaic['id']+'/'+start_periode.replace('-','')+'_'+end_periode.replace('-','')
         list_sources= period_dict[i]['image_asf']
-        for j in list_sources:
-            if not os.path.exists('/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim'):
-                preprocessing('/data/ksa/01_Image_Acquisition/01_Raw_Image/'+j+'.zip')
-        mosaicing(list_sources,total_bounds,wkt_bounds,outflnm)
+        list_sources_mosaic=[]
+        if not os.path.exists(outflnm+'.dim'):
+            for j in list_sources:
+                try:
+                    # 35, 16, dan 18 di reset ya.
+                    if not os.path.exists('/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim'):
+                        preprocessing('/data/ksa/01_Image_Acquisition/01_Raw_Image/'+j+'.zip')
+                    else:
+                        try:
+                            sentinel_1 = ProductIO.readProduct('/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim')
+                            print(sentinel_1)
+                            print('Image for: ', '/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim',' already processed. Skip')
+                            sentinel_1.dispose()
+                            sentinel_1.closeIO()
+                        except:
+                            preprocessing('/data/ksa/01_Image_Acquisition/01_Raw_Image/'+j+'.zip')
+                    list_sources_mosaic.append(j)
+                except Exception as e:
+                    print("An error occurred:", e)
+            mosaicing(list_sources_mosaic,total_bounds,wkt_bounds,outflnm)
+        else:
+            print('Mosaic file for the current period has been processed previously.')
+        #    print('Encountering Error while doing the mosaic due to incompleted process previously.')
         #break
     print('FINISHED')
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')  
 
 def main():
     kdprov=sys.argv[1]
-    metadata='/data/ksa/01_Image_Acquisition/05_Json_Coverage/32_coverage_ASF.json'
+    metadata=f'/data/ksa/01_Image_Acquisition/05_Json_Coverage/{kdprov}_coverage_ASF.json'
     with open(metadata,'r') as f:
         dt_prov=json.load(f)
     for i in range(0,len(dt_prov)):

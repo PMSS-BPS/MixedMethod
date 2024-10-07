@@ -54,8 +54,6 @@ def process_idpoint(j, dt_pkl, list_date, mgrs_map):
             pl.Series(temp2['weight']).alias('weight'),
             pl.Series(temp2['MGRS']).alias('MGRS'),
             pl.Series(temp2['idpoint']).alias('idpoint')
-            #pl.when(pl.col('Sigma0_VH_db') != 0).then(pl.col('Sigma0_VH_db')).otherwise(pl.col('Sigma0_VH_db_interp')).alias('Sigma0_VH_db_imputted'),
-            #pl.when(pl.col('Sigma0_VV_db') != 0).then(pl.col('Sigma0_VV_db')).otherwise(pl.col('Sigma0_VV_db_interp')).alias('Sigma0_VV_db_imputted')
         ])
     return temp2
     
