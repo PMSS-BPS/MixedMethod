@@ -46,11 +46,18 @@ def process_idpoint(j, dt_pkl, list_date, mgrs_map):
     
     weight_sum = temp2['weight'].sum()
     total_count = temp2.shape[0]
-    
-    whittaker_smoother = WhittakerSmoother(lmbda=1, order=2, data_length=total_count, weights=temp2['weight'].to_numpy())
-    temp2 = temp2.with_columns([
+    try:
+        whittaker_smoother = WhittakerSmoother(lmbda=5, order=2, data_length=total_count, weights=temp2['weight'].to_numpy())
+        temp2 = temp2.with_columns([
             pl.Series(whittaker_smoother.smooth(temp2['Sigma0_VH_db'].to_numpy())).alias('Sigma0_VH_db_interp'),
-            pl.Series(whittaker_smoother.smooth(temp2['Sigma0_VV_db'].to_numpy())).alias('Sigma0_VV_db_interp'),
+            pl.Series(temp2['weight']).alias('weight'),
+            pl.Series(temp2['MGRS']).alias('MGRS'),
+            pl.Series(temp2['idpoint']).alias('idpoint')
+        ])
+    except:
+        whittaker_smoother = WhittakerSmoother(lmbda=0.01, order=2, data_length=total_count, weights=temp2['weight'].to_numpy())
+        temp2 = temp2.with_columns([
+            pl.Series(whittaker_smoother.smooth(temp2['Sigma0_VH_db'].to_numpy())).alias('Sigma0_VH_db_interp'),
             pl.Series(temp2['weight']).alias('weight'),
             pl.Series(temp2['MGRS']).alias('MGRS'),
             pl.Series(temp2['idpoint']).alias('idpoint')
@@ -63,7 +70,7 @@ def main(kdprov):
     pickle_prov = glob(f'/data/ksa/03_Sampling/data/{kdprov}/*.pkl')
     print('Found:', len(pickle_prov), 'data')
     list_date = prepare_dates()
-    num_workers = 40  # Adjust this based on your system's capability
+    num_workers = 10  # Adjust this based on your system's capability
     
     for i in pickle_prov:
         mgrs = os.path.basename(i).replace('.pkl', '').replace('sampling_', '')
@@ -86,9 +93,9 @@ def main(kdprov):
             print('Finish Imputation. Follow the results by compiling data.')
             temp=temp.to_pandas()
             temp['Sigma0_VH_db_imputation']=temp.apply(lambda y: y['Sigma0_VH_db'] if y['weight']>0 else y['Sigma0_VH_db_interp'], axis=1)
-            temp['Sigma0_VV_db_imputation']=temp.apply(lambda y: y['Sigma0_VV_db'] if y['weight']>0 else y['Sigma0_VV_db_interp'], axis=1)
+            temp['Sigma0_VH_db_interpolate']=temp.apply(lambda y: y['Sigma0_VH_db_interp'], axis=1)
             with open(output, 'wb') as file:
-                pickle.dump(temp[['periode', 'idpoint', 'MGRS', 'weight', 'Sigma0_VH_db_imputation','Sigma0_VV_db_imputation']], file) 
+                pickle.dump(temp[['periode', 'idpoint', 'MGRS', 'weight', 'Sigma0_VH_db_imputation','Sigma0_VH_db_interpolate']], file) 
         print('-------------------------------------------------------')
     print('Finish')
     print('=================================================')

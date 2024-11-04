@@ -200,17 +200,17 @@ def run_mosaic(dict_mosaic):
             for j in list_sources:
                 try:
                     # 35, 16, dan 18 di reset ya.
-                    if not os.path.exists('/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim'):
-                        preprocessing('/data/ksa/01_Image_Acquisition/01_Raw_Image/'+j+'.zip')
-                    else:
-                        try:
-                            sentinel_1 = ProductIO.readProduct('/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim')
-                            print(sentinel_1)
-                            print('Image for: ', '/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim',' already processed. Skip')
-                            sentinel_1.dispose()
-                            sentinel_1.closeIO()
-                        except:
-                            preprocessing('/data/ksa/01_Image_Acquisition/01_Raw_Image/'+j+'.zip')
+                    #if not os.path.exists('/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim'):
+                    preprocessing('/data/ksa/01_Image_Acquisition/01_Raw_Image/'+j+'.zip')
+                    #else:
+                    #    try:
+                    #        sentinel_1 = ProductIO.readProduct('/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim')
+                    #        print(sentinel_1)
+                    #        print('Image for: ', '/data/ksa/01_Image_Acquisition/02_Processed_Image_rev/'+j+'.dim',' already processed. Skip')
+                    #        sentinel_1.dispose()
+                    #        sentinel_1.closeIO()
+                    #    except:
+                    #        preprocessing('/data/ksa/01_Image_Acquisition/01_Raw_Image/'+j+'.zip')
                     list_sources_mosaic.append(j)
                 except Exception as e:
                     print("An error occurred:", e)
@@ -230,7 +230,9 @@ def main():
     for i in range(0,len(dt_prov)):
         print('*********************************************************')
         print('Preprocessing followed by mosaic begin for PROV:',kdprov)
-        run_mosaic(dt_prov[i])
+        print(dt_prov[i]['id'])
+        if dt_prov[i]['id'] in ['54LVR', '54LVS', '54MVT', '54MUT']:
+            run_mosaic(dt_prov[i])
         print('*********************************************************')
         
 if __name__ == "__main__":
